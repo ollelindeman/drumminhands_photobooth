@@ -150,31 +150,7 @@ def start_photobooth():
 	finally:
 		camera.stop_preview()
 		camera.close()
-	########################### Begin Step 3 #################################
-	print "Creating an animated gif" 
 
-	GPIO.output(led3_pin,True) #turn on the LED
-	graphicsmagick = "gm convert -delay " + str(gif_delay) + " " + config.file_path + now + "*.jpg " + config.file_path + now + ".gif" 
-	os.system(graphicsmagick) #make the .gif
-	print "Uploading to tumblr. Please check " + config.tumblr_blog + ".tumblr.com soon."
-
-	if post_online: # turn off posting pics online in the variable declarations at the top of this document
-		connected = is_connected() #check to see if you have an internet connection
-		while connected: 
-			try:
-				file_to_upload = config.file_path + now + ".gif"
-				client.create_photo(config.tumblr_blog, state="published", tags=["drumminhandsPhotoBooth"], data=file_to_upload)
-				break
-			except ValueError:
-				print "Oops. No internect connection. Upload later."
-				try: #make a text file as a note to upload the .gif later
-					file = open(config.file_path + now + "-FILENOTUPLOADED.txt",'w')   # Trying to create a new file or open one
-					file.close()
-				except:
-					print('Something went wrong. Could not write file.')
-					sys.exit(0) # quit Python
-	GPIO.output(led3_pin,False) #turn off the LED
-	
 	########################### Begin Step 4 #################################
 	GPIO.output(led4_pin,True) #turn on the LED
 	print "Done"

@@ -13,8 +13,12 @@ import atexit
 import sys
 import socket
 import pytumblr # https://github.com/tumblr/pytumblr
-import config
 from signal import alarm, signal, SIGALRM, SIGKILL
+
+root_path   = '/home/pi/photobooth/'
+file_path   = root_path + 'photobooth/pics/'
+export_path = root_path + 'photobooth/export/'
+
 
 ########################
 ### Variables Config ###
@@ -36,14 +40,6 @@ restart_delay = 5 # how long to display finished message before beginning a new 
 
 test_server = 'www.google.com'
 real_path = os.path.dirname(os.path.realpath(__file__))
-
-# Setup the tumblr OAuth Client
-client = pytumblr.TumblrRestClient(
-    config.consumer_key,
-    config.consumer_secret,
-    config.oath_token,
-    config.oath_secret,
-);
 
 ####################
 ### Other Config ###
@@ -70,8 +66,8 @@ def cleanup():
   GPIO.cleanup()
 atexit.register(cleanup)
 
-def shut_it_down(channel):  
-    print "Shutting down..." 
+def shut_it_down(channel):
+    print "Shutting down..."
     GPIO.output(led1_pin,True);
     GPIO.output(led2_pin,True);
     GPIO.output(led3_pin,True);
@@ -80,16 +76,16 @@ def shut_it_down(channel):
     os.system("sudo halt")
 
 def exit_photobooth(channel):
-    print "Photo booth app ended. RPi still running" 
+    print "Photo booth app ended. RPi still running"
     GPIO.output(led1_pin,True);
     time.sleep(3)
     sys.exit()
-    
+
 def clear_pics(foo): #why is this function being passed an arguments?
     #delete files in folder on startup
-	files = glob.glob(config.file_path + '*')
+	files = glob.glob(file_path + '*')
 	for f in files:
-		os.remove(f) 
+		os.remove(f)
 	#light the lights in series to show completed
 	print "Deleted previous pics"
 	GPIO.output(led1_pin,False); #turn off the lights
@@ -98,11 +94,11 @@ def clear_pics(foo): #why is this function being passed an arguments?
 	GPIO.output(led4_pin,False)
 	pins = [led1_pin, led2_pin, led3_pin, led4_pin]
 	for p in pins:
-		GPIO.output(p,True); 
+		GPIO.output(p,True);
 		sleep(0.25)
 		GPIO.output(p,False);
 		sleep(0.25)
-      
+
 def is_connected():
   try:
     # see if we can resolve the host name -- tells us if there is
@@ -114,32 +110,32 @@ def is_connected():
     return True
   except:
      pass
-  return False    
+  return False
 
-# define the photo taking function for when the big button is pressed 
-def start_photobooth(): 
-	################################# Begin Step 1 ################################# 
+# define the photo taking function for when the big button is pressed
+def start_photobooth():
+	################################# Begin Step 1 #################################
 	print "Get Ready"
 	GPIO.output(led1_pin,True);
-	sleep(prep_delay) 
+	sleep(prep_delay)
 	GPIO.output(led1_pin,False)
 
 	camera = picamera.PiCamera()
 	pixel_width = 500 #use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
 	pixel_height = 500
-	camera.resolution = (pixel_width, pixel_height) 
+	camera.resolution = (pixel_width, pixel_height)
 	camera.vflip = True
 	camera.hflip = False
 	#camera.saturation = -100 # comment out this line if you want color images
 	camera.start_preview()
-	
+
 	sleep(2) #warm up camera
 
 	################################# Begin Step 2 #################################
-	print "Taking pics" 
+	print "Taking pics"
 	now = time.strftime("%Y-%m-%d-%H:%M:%S") #get the current date and time for the start of the filename
 	try: #take the photos
-		for i, filename in enumerate(camera.capture_continuous(config.file_path + now + '-' + '{counter:02d}.jpg')):
+		for i, filename in enumerate(camera.capture_continuous(file_path + now + '-' + '{counter:02d}.jpg')):
 			GPIO.output(led2_pin,True) #turn on the LED
 			print(filename)
 			sleep(0.25) #pause the LED on for just a bit
@@ -151,31 +147,35 @@ def start_photobooth():
 		camera.stop_preview()
 		camera.close()
 
+    ################################# Begin Step 3 #################################
+    print "Moving pictures to export dir"
+    os.system("mv " + file_path + "* " + export_path)
+
 	########################### Begin Step 4 #################################
 	GPIO.output(led4_pin,True) #turn on the LED
 	print "Done"
 	GPIO.output(led4_pin,False) #turn off the LED
-	
+
 	time.sleep(restart_delay)
 
 ####################
 ### Main Program ###
 ####################
 
-# when a falling edge is detected on button2_pin and button3_pin, regardless of whatever   
-# else is happening in the program, their function will be run   
-#GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300) 
+# when a falling edge is detected on button2_pin and button3_pin, regardless of whatever
+# else is happening in the program, their function will be run
+#GPIO.add_event_detect(button2_pin, GPIO.FALLING, callback=shut_it_down, bouncetime=300)
 
 #choose one of the two following lines to be un-commented
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=exit_photobooth, bouncetime=300) #use third button to exit python. Good while developing
 #GPIO.add_event_detect(button3_pin, GPIO.FALLING, callback=clear_pics, bouncetime=300) #use the third button to clear pics stored on the SD card from previous events
 
 # delete files in folder on startup
-files = glob.glob(config.file_path + '*')
+files = glob.glob(file_path + '*')
 for f in files:
     os.remove(f)
 
-print "Photo booth app running..." 
+print "Photo booth app running..."
 GPIO.output(led1_pin,True); #light up the lights to show the app is running
 GPIO.output(led2_pin,True);
 GPIO.output(led3_pin,True);

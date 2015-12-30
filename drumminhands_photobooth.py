@@ -16,8 +16,8 @@ import pytumblr # https://github.com/tumblr/pytumblr
 from signal import alarm, signal, SIGALRM, SIGKILL
 
 root_path   = '/home/pi/photobooth/'
-file_path   = root_path + 'photobooth/pics/'
-export_path = root_path + 'photobooth/export/'
+file_path   = root_path + 'pics/'
+export_path = root_path + 'export/'
 
 
 ########################
@@ -147,9 +147,9 @@ def start_photobooth():
 		camera.stop_preview()
 		camera.close()
 
-    ################################# Begin Step 3 #################################
-    print "Moving pictures to export dir"
-    os.system("mv " + file_path + "* " + export_path)
+        ################################# Begin Step 3 #################################
+        print "Moving pictures to export dir"
+        os.system("mv " + file_path + "* " + export_path)
 
 	########################### Begin Step 4 #################################
 	GPIO.output(led4_pin,True) #turn on the LED

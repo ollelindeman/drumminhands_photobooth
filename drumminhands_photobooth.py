@@ -121,9 +121,9 @@ def start_photobooth():
 	GPIO.output(led1_pin,False)
 
 	camera = picamera.PiCamera()
-	pixel_width = 500 #use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
-	pixel_height = 500
-	camera.resolution = (pixel_width, pixel_height)
+	#pixel_width = 500 #use a smaller size to process faster, and tumblr will only take up to 500 pixels wide for animated gifs
+	#pixel_height = 500
+	#camera.resolution = (pixel_width, pixel_height)
 	camera.vflip = True
 	camera.hflip = False
 	#camera.saturation = -100 # comment out this line if you want color images
@@ -135,21 +135,19 @@ def start_photobooth():
 	print "Taking pics"
 	now = time.strftime("%Y-%m-%d-%H:%M:%S") #get the current date and time for the start of the filename
 	try: #take the photos
-		for i, filename in enumerate(camera.capture_continuous(file_path + now + '-' + '{counter:02d}.jpg')):
-			GPIO.output(led2_pin,True) #turn on the LED
-			print(filename)
-			sleep(0.25) #pause the LED on for just a bit
-			GPIO.output(led2_pin,False) #turn off the LED
-			sleep(capture_delay) # pause in-between shots
-			if i == total_pics-1:
-				break
+        for i in range(total_pics):
+            GPIO.output(led2_pin,True) #turn on the LED
+            camera.capture(file_path + now + '-' + ("%02d" % i) + ".jpg")
+            print(filename)
+            GPIO.output(led2_pin,False) #turn off the LED
+            sleep(capture_delay) # pause in-between shots
 	finally:
 		camera.stop_preview()
 		camera.close()
 
-        ################################# Begin Step 3 #################################
-        print "Moving pictures to export dir"
-        os.system("mv " + file_path + "* " + export_path)
+    ################################# Begin Step 3 #################################
+    print "Moving pictures to export dir"
+    os.system("mv " + file_path + "* " + export_path)
 
 	########################### Begin Step 4 #################################
 	GPIO.output(led4_pin,True) #turn on the LED
@@ -187,6 +185,8 @@ GPIO.output(led3_pin,False);
 GPIO.output(led4_pin,False);
 
 while True:
-        GPIO.wait_for_edge(button1_pin, GPIO.FALLING)
+    GPIO.output(led1_pin, True) # Light button
+    GPIO.wait_for_edge(button1_pin, GPIO.FALLING)
+    GPIO.output(led1_pin, False)
 	time.sleep(0.2) #debounce
 	start_photobooth()
